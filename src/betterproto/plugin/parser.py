@@ -71,6 +71,7 @@ def parse_options(plugin_options: List[str]) -> Options:
             options.include_google = True
     return options
 
+
 def generate_code(request: CodeGeneratorRequest) -> CodeGeneratorResponse:
     response = CodeGeneratorResponse()
 
@@ -79,9 +80,7 @@ def generate_code(request: CodeGeneratorRequest) -> CodeGeneratorResponse:
 
     options = parse_options(plugin_options)
 
-    request_data = PluginRequestCompiler(
-        plugin_request_obj=request, options=options
-    )
+    request_data = PluginRequestCompiler(plugin_request_obj=request, options=options)
     # Gather output packages
     for proto_file in request.proto_file:
         if proto_file.package == "google.protobuf" and options.include_google:

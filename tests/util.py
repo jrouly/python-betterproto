@@ -27,19 +27,28 @@ def get_directories(path):
 
 
 async def protoc(
-    path: Union[str, Path], output_dir: Union[str, Path], reference: bool = False
+    path: Union[str, Path],
+    output_dir: Union[str, Path],
+    reference: bool = False,
+    parameters: Optional[dict[str, str]] = None,
 ):
     path: Path = Path(path).resolve()
     output_dir: Path = Path(output_dir).resolve()
     python_out_option: str = "python_betterproto_out" if not reference else "python_out"
+
+    parameter_string = ""
+    if parameters:
+        parameter_string = ",".join([f"{k}={v}" for k, v in parameters.items()]) + ":"
+
     command = [
         sys.executable,
         "-m",
         "grpc.tools.protoc",
         f"--proto_path={path.as_posix()}",
-        f"--{python_out_option}={output_dir.as_posix()}",
+        f"--{python_out_option}={parameter_string}{output_dir.as_posix()}",
         *[p.as_posix() for p in path.glob("*.proto")],
     ]
+
     proc = await asyncio.create_subprocess_exec(
         *command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
     )

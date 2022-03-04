@@ -5,7 +5,7 @@ from pathlib import Path
 import platform
 import shutil
 import sys
-from typing import Set
+from typing import Set, Optional
 
 from tests.util import (
     get_directories,
@@ -28,7 +28,11 @@ def clear_directory(dir_path: Path):
             file_or_directory.unlink()
 
 
-async def generate(whitelist: Set[str], verbose: bool):
+async def generate(
+    whitelist: Set[str],
+    verbose: bool,
+    parameters: Optional[dict[str, str]] = None,
+):
     test_case_names = set(get_directories(inputs_path)) - {"__pycache__"}
 
     path_whitelist = set()
@@ -49,7 +53,9 @@ async def generate(whitelist: Set[str], verbose: bool):
         ):
             continue
         generation_tasks.append(
-            generate_test_case_output(test_case_input_path, test_case_name, verbose)
+            generate_test_case_output(
+                test_case_input_path, test_case_name, verbose, parameters
+            ),
         )
 
     failed_test_cases = []
@@ -71,7 +77,10 @@ async def generate(whitelist: Set[str], verbose: bool):
 
 
 async def generate_test_case_output(
-    test_case_input_path: Path, test_case_name: str, verbose: bool
+    test_case_input_path: Path,
+    test_case_name: str,
+    verbose: bool,
+    parameters: Optional[dict[str, str]] = None,
 ) -> int:
     """
     Returns the max of the subprocess return values
@@ -90,8 +99,10 @@ async def generate_test_case_output(
         (ref_out, ref_err, ref_code),
         (plg_out, plg_err, plg_code),
     ) = await asyncio.gather(
-        protoc(test_case_input_path, test_case_output_path_reference, True),
-        protoc(test_case_input_path, test_case_output_path_betterproto, False),
+        protoc(test_case_input_path, test_case_output_path_reference, True, parameters),
+        protoc(
+            test_case_input_path, test_case_output_path_betterproto, False, parameters
+        ),
     )
 
     if ref_code == 0:
